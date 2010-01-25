@@ -1,3 +1,8 @@
+Version 1.0.1 (2010-01-25):
+
+  * Bug fix of `select' invocation in PresentedRow.validate when called from
+    Wiking.
+  
 Version 1.0.0 (2010-01-21):
  
   * First official release

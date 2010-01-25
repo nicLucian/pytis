@@ -1,5 +1,12 @@
 2010-01-25  Milan Zamazal  <pdm@brailcom.org>
 
+	* NEWS:
+	* lib/pytis/__init__.py:
+	Pytis 1.0.1.
+	
+
+2010-01-25  Milan Zamazal  <pdm@brailcom.org>
+
 	* lib/pytis/data/postgresql.py:
 	Allow other arguments in DBDataPostgreSQL.select.
 

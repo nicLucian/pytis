@@ -2319,7 +2319,7 @@ class DBDataPostgreSQL(PostgreSQLStandardBindingHandler, PostgreSQLNotifier):
         return result
         
     def select(self, condition=None, sort=(), reuse=False, columns=None, transaction=None,
-               arguments={}):
+               arguments={}, **kwargs):
         if __debug__:
             log(DEBUG, 'Select started:', condition)
         if (reuse and not self._pg_changed and self._pg_number_of_rows and

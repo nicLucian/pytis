@@ -2,7 +2,7 @@
 
 # Prvky u¾ivatelského rozhraní související s vyhledáváním
 # 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -622,6 +622,7 @@ class FilterDialog(SFDialog):
     def _create_content(self, sizer):
         super(FilterDialog, self)._create_content(sizer)
         cp = wx.CollapsiblePane(self._dialog, label=_("Agregaèní funkce"))
+        self._handle_keys(cp)
         pane = cp.GetPane()
         choice, field, button = self._create_choice, self._create_text_ctrl, self._create_button
         self._agg_controls = (

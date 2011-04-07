@@ -90,7 +90,8 @@ class SFSDialog(GenericDialog):
         return find(cid, self._columns, key=lambda c: c.id())
 
     def _create_ctrl(self, constructor, *args, **kwargs):
-        ctrl = constructor(self._dialog, *args, **kwargs)
+        parent = kwargs.pop('parent', self._dialog)
+        ctrl = constructor(parent, *args, **kwargs)
         self._handle_keys(ctrl)
         return ctrl
     
@@ -620,21 +621,23 @@ class FilterDialog(SFDialog):
 
     def _create_content(self, sizer):
         super(FilterDialog, self)._create_content(sizer)
+        cp = wx.CollapsiblePane(self._dialog, label=_("Agregaèní funkce"))
+        pane = cp.GetPane()
         choice, field, button = self._create_choice, self._create_text_ctrl, self._create_button
         self._agg_controls = (
-            choice([(c.label(), c) for c in self._columns],
+            choice([(c.label(), c) for c in self._columns], parent=pane,
                    tooltip=_("Zvolte sloupec pro agregaci")),
-            choice([(self._AGG_LABELS[op], op) for op in self._AGG_OPERATORS],
+            choice([(self._AGG_LABELS[op], op) for op in self._AGG_OPERATORS], parent=pane,
                    tooltip=_("Zvolte agregaèní funkci")),
-            field(None, length=24, readonly=True,
+            field(None, length=24, readonly=True, parent=pane,
                   tooltip=_("Zobrazení výsledku agregaèní funkce")),
-            button(_("Zjistit"), self._on_compute_aggregate,
+            button(_("Zjistit"), self._on_compute_aggregate, parent=pane,
                    tooltip=_("Zobraz výsledek zvolené agrekaèní funkce")))
-        box = wx.StaticBox(self._dialog, -1, _("Agregaèní funkce:"))
-        boxsizer = wx.StaticBoxSizer(box, wx.HORIZONTAL)
+        boxsizer = wx.BoxSizer(wx.HORIZONTAL)
         for ctrl in self._agg_controls:
             boxsizer.Add(ctrl)
-        sizer.Add(boxsizer, 0, wx.ALL|wx.CENTER, 5)
+        pane.SetSizer(boxsizer)
+        sizer.Add(cp, 0, wx.ALL, 5)
 
 
     def _on_compute_aggregate(self, event):

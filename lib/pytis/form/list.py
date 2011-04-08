@@ -307,6 +307,7 @@ class ListForm(RecordForm, TitledForm, Refreshable):
             # If the above failed, attempt to select the former line at least
             # by row number.
             if self._current_key() != original_key:
+                row = current_row_number
                 if row < self._table.number_of_rows(min_value=row+1) and row >= 0:
                     self._select_cell(row=row)
                 else:

@@ -888,7 +888,7 @@ class LookupForm(InnerForm):
         # Create a Profile instance representing the form constructor
         # arguments.  Note, that the default profile is not necessarily the
         # initially selected profile.
-        self._default_profile = Profile('__default_profile__', _("Výchozí profil"),
+        self._default_profile = Profile('__default_profile__', _(u"Výchozí profil"),
                                         filter=filter, sorting=sorting, columns=columns,
                                         grouping=grouping)
         self._profiles, self._invalid_profiles = self._load_profiles()

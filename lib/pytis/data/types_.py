@@ -654,7 +654,7 @@ class Float(Number):
                     string = string.encode(encoding)
                 value = locale.atof(string)
             else:
-                value = string.atof(string)
+                value = float(string)
         except:
             # Dokumentace Pythonu 1.5.2 neøíká, ¾e by `float' mohlo metat metat
             # nìjakou výjimkou, ale evidentnì by mìlo, pokud `string' nelze

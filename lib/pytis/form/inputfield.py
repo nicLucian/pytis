@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-2 -*-
 
-# Copyright (C) 2001-2010 Brailcom, o.p.s.
+# Copyright (C) 2001-2011 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -266,10 +266,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         elif isinstance(type, pytis.data.String):
             field = StringField
         elif isinstance(type, pytis.data.Number):
-            if spec.slider() and not inline:
-                field = SliderField
-            else:
-                field = NumericField
+            field = NumericField
         else:
             field = TextField
         return field(parent, row, id, inline=inline, **kwargs)
@@ -1005,30 +1002,37 @@ class NumericField(TextField, SpinnableField):
     """Textové vstupní políčko pro data typu 'pytis.data.Number'."""
     _SPIN_STEP = 1
 
-class SliderField(InputField):
-
-    def _create_ctrl(self):
-        if self.height() == 1:
-            style = wx.SL_HORIZONTAL
+    def _create_widget(self):
+        result = super(TextField, self)._create_widget()
+        if self._spec.slider() and not self._inline:
+            box = wx.BoxSizer()
+            slider = wx.Slider(self._parent, -1, style=wx.SL_HORIZONTAL,
+                                     minValue=self._type.minimum() or 0,
+                                     maxValue=self._type.maximum() is None and 100 or self._type.maximum(),
+                                     size=(200, 25))
+            wx_callback(wx.EVT_SCROLL, slider, self._on_slider)
+            box.Add(result)
+            box.Add(slider)
+            result = box
         else:
-            style = wx.SL_VERTICAL
-        style |= wx.SL_LABELS
-        ctrl = wx.Slider(self._parent, -1, style=style,
-                         minValue=self._type.minimum() or 0,
-                         maxValue=self._type.maximum() is None and 100 or self._type.maximum(),
-                         # Use min height 1.6 to fit the labels when height = 1.
-                         size=self._px_size(self.width(), max(self.height(), 1.6)))
-        wx_callback(wx.EVT_SCROLL, ctrl, self._on_change)
-        return ctrl
+            slider = None
+        self._slider = slider
+        return result
     
-    def _get_value(self):
-        return str(self._ctrl.GetValue())
+    def _on_slider(self, event):
+        self._set_value(str(self._slider.GetValue()))
+        
+    def _on_change(self, event=None):
+        super(TextField, self)._on_change(event=event)
+        value = self._get_value()
+        if self._slider:
+            try:
+                position = int(value)
+            except ValueError:
+                position = self._slider.GetMin()
+            self._slider.SetValue(position)
 
-    def _set_value(self, value):
-        self._ctrl.SetValue(int(value))
-        self._on_change()
-
-    
+   
 class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
 

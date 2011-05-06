@@ -1514,6 +1514,8 @@ class ListForm(RecordForm, TitledForm, Refreshable):
                          ListForm.COMMAND_FINISH_EDITING,
                          ListForm.COMMAND_CELL_COMMIT,
                          ListForm.COMMAND_CELL_ROLLBACK)
+        if not self.initialized():
+            self.full_init()
         if self._table.editing():
             allowed = EDIT_COMMANDS
             if not self._grid.IsCellEditControlEnabled():

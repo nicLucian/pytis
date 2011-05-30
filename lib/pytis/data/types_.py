@@ -1661,7 +1661,7 @@ class Binary(Limited):
                 self._buffer = data
             elif isinstance(data, basestring):
                 self.load(data)
-            elif isinstance(data, file):
+            elif isinstance(data, (file, StringIO)):
                 self._load(data)
             else:
                 raise ProgramError("Invalid Buffer data:", data)

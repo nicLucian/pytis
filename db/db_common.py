@@ -44,6 +44,7 @@ def Cuser(name, doc=None):
 
 Gall_pytis = globals().get('Gall_pytis', (('all', 'pytis'),))
 Grights_log_update = globals().get('Grights_log_update', (('all', 'pytis'),))
+Gpytis_schemas = globals().get('Gpytis_schemas', None)
 
 def _std_table(name, columns, doc, grant=Gall_pytis, **kwargs):
     return table(name, columns, inherits=('_changes',), grant=grant,
@@ -412,17 +413,17 @@ function('only_digits', (TString,), TBoolean,
          doc="Pomocná funkce pro CHECK constraint.")
 
 function('f_date_year', (TDate,), TInteger, "select date_part(''year'', $1)::int",
-         schemas=SCHEMAS_COMMON,
+         schemas=Gpytis_schemas,
          doc="Pomocná funkce pro agregační matici pytisu.")
 function('f_date_halfyear', (TDate,), TInteger,
          "select case when date_part(''month'', $1) < 7 then 1 else 2 end::int",
-         schemas=SCHEMAS_COMMON,
+         schemas=Gpytis_schemas,
          doc="Pomocná funkce pro agregační matici pytisu.")
 function('f_date_quarter', (TDate,), TInteger, "select date_part(''quarter'', $1)::int",
-         schemas=SCHEMAS_COMMON,
+         schemas=Gpytis_schemas,
          doc="Pomocná funkce pro agregační matici pytisu.")
 function('f_date_month', (TDate,), TInteger, "select date_part(''month'', $1)::int",
-         schemas=SCHEMAS_COMMON,
+         schemas=Gpytis_schemas,
          doc="Pomocná funkce pro agregační matici pytisu.")
 
 table('_changes',

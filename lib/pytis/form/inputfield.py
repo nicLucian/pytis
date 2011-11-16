@@ -33,7 +33,7 @@ import pytis.windows
 import wx.lib.colourselect
 from cStringIO import StringIO
 import datetime
-#from wxPython.pytis.maskededit import wxMaskedTextCtrl
+import wx.lib.masked
 
 
 class _TextValidator(wx.PyValidator):
@@ -739,12 +739,19 @@ class TextField(InputField):
     ASCII   = map(chr, range(127))
     LETTERS = map(chr, range(ord('a'),ord('z')+1) + range(ord('A'),ord('Z')+1))
 
+
+    def _create_text_ctrl(self, parent, size, style):
+        return wx.TextCtrl(parent, -1, '', size=size, style=style)
+
     def _create_ctrl(self, parent):
         if not self._inline:
             size = self._px_size(parent, self.width(), self.height())
         else:
             size = None
-        control = wx.TextCtrl(parent, -1, '', style=self._ctrl_style(), size=size)
+        style = wx.TE_PROCESS_ENTER
+        if self.height() > 1:
+            style |= wx.TE_MULTILINE
+        control = self._create_text_ctrl(parent, size, style)
         wxid = control.GetId()
         maxlen = self._maxlen()
         if maxlen is not None:
@@ -762,24 +769,11 @@ class TextField(InputField):
         self._update_completions = None
         return control
 
-    def _create_button(self, parent, label, icon=None):
-        return wx_button(parent, label=label, icon=icon, size=self._button_size(parent))
-
-    def _button_size(self, parent):
-        x = self._px_size(parent, 1, 1)[1]
-        return (x, x)
-        
     def on_key_down(self, event):
         if self._completer and self._completer.on_key_down(event):
             return
         super(TextField, self).on_key_down(event)
 
-    def _ctrl_style(self):
-        style = wx.TE_PROCESS_ENTER
-        if self.height() > 1:
-            style |= wx.TE_MULTILINE
-        return style
-    
     def _maxlen(self):
         """Vrať maximální délku zadaného textu."""
         return None
@@ -931,8 +925,8 @@ class StringField(TextField):
 class PasswordField(StringField):
     _ORIGINAL_VALUE = u'\u2024'*8
     
-    def _ctrl_style(self):
-        return super(PasswordField, self)._ctrl_style() | wx.TE_PASSWORD
+    def _create_text_ctrl(self, parent, size, style):
+        return super(PasswordField, self)._create_text_ctrl(parent, size, style|wx.TE_PASSWORD)
 
     def _create_widget(self, parent):
         result = super(PasswordField, self)._create_widget(parent)
@@ -1256,10 +1250,38 @@ class DateField(Invocable, TextField, SpinnableField):
 
     """
 
+    _DEFAULT_BACKGROUND_COLOR = wx.WHITE
     _DEFAULT_WIDTH = 10
     _INVOKE_TITLE = _(u"Vybrat z kalendáře")
     _INVOKE_HELP = _(u"Zobrazit kalendář pro výběr datumu.")
     _SPIN_STEP = datetime.timedelta(days=1)
+
+    def _create_text_ctrl(self, parent, size, style):
+        format = config.date_format.lower()
+        for src, dst in (('%d','dd'), ('%m','mm'), ('%y','yyyy')):
+            format = format.replace(src, dst)
+        mapping = dict([(v['description'].lower(), k) for k, v in masked.masktags.items()])
+        autoformat = mapping.get(format, 'EUDATEDDMMYYYY/')
+        ctrl = wx.lib.masked.TextCtrl(parent, -1, style=style, size=size, autoformat=autoformat)
+        ctrl.SetSize(size)
+        self._initial_size = ctrl.GetSize()
+        return ctrl
+
+    def _set_background_color(self, color):
+        # Force our colors over the control's colors as the control doesn't
+        # handle ineditable and denied colors.
+        self._ctrl.SetValidBackgroundColour(color)
+        self._ctrl.SetInvalidBackgroundColour(color)
+        self._ctrl.SetEmptyBackgroundColour(color)
+        # HACK to maintain the desired size (otherwise the control gets resized
+        # when displayed for some unknown reason).
+        self._ctrl.SetSize(self._initial_size)
+        
+    def _get_value(self):
+        if self._ctrl.IsEmpty():
+            return ''
+        else:
+            return self._ctrl.GetValue()
     
     def _on_invoke_selection(self, alternate=False):
         if self._valid:
@@ -1966,7 +1988,7 @@ class StructuredTextField(TextField):
                     )
         return menu
     
-    def _create_ctrl(self, parent):
+    def _create_text_ctrl(self, parent, size, style):
         import wx.stc
         class TextCtrl(wx.stc.StyledTextCtrl):
             """StyledTextCtrl implementing the TextCtrl API used by parent classes.
@@ -1991,18 +2013,11 @@ class StructuredTextField(TextField):
         # wx.stc.StyledTextCtrl as it has some strange bugs in caret
         # positioning etc.  Once this is resolved, we can re-enable usiong the
         # derived TextCtrl class defined above.
-        #ctrl = TextCtrl(parent, -1, style=self._ctrl_style())
+        #ctrl = TextCtrl(parent, -1, style=style)
         #wx_callback(wx.stc.EVT_STC_MODIFIED, ctrl, ctrl.GetId(), self._on_change)
-        if not self._inline:
-            size = self._px_size(parent, self.width(), self.height())
-        else:
-            size = None
-        ctrl = wx.TextCtrl(parent, -1, style=self._ctrl_style(), size=size)
+        ctrl = wx.TextCtrl(parent, -1, style=style, size=size)
         # Set a monospace font
         ctrl.SetFont(wx.Font(ctrl.GetFont().GetPointSize(), wx.MODERN, wx.NORMAL, wx.NORMAL))
-        wx_callback(wx.EVT_TEXT, ctrl, ctrl.GetId(), self._on_change)
-        self._completer = None
-        self._update_completions = None
         return ctrl
         
     def _create_widget(self, parent):

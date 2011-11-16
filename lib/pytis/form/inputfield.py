@@ -1257,12 +1257,11 @@ class DateField(Invocable, TextField, SpinnableField):
     _SPIN_STEP = datetime.timedelta(days=1)
 
     def _create_text_ctrl(self, parent, size, style):
-        format = config.date_format.lower()
-        for src, dst in (('%d','dd'), ('%m','mm'), ('%y','yyyy')):
-            format = format.replace(src, dst)
-        mapping = dict([(v['description'].lower(), k) for k, v in masked.masktags.items()])
-        autoformat = mapping.get(format, 'EUDATEDDMMYYYY/')
-        ctrl = wx.lib.masked.TextCtrl(parent, -1, style=style, size=size, autoformat=autoformat)
+        mask = config.date_format.lower()
+        for src, dst in (('%d','##'), ('%m','##'), ('%y','####')):
+            mask = mask.replace(src, dst)
+        print mask
+        ctrl = wx.lib.masked.TextCtrl(parent, -1, style=style, formatcodes='DF', mask=mask)
         ctrl.SetSize(size)
         self._initial_size = ctrl.GetSize()
         return ctrl

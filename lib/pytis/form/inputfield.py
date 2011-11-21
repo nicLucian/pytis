@@ -1363,6 +1363,14 @@ class ColorSelectionField(Invocable, MaskedTextField):
         if color != None:
             self._set_value(color)
 
+    def _on_change_hook(self):
+        super(ColorSelectionField, self)._on_change_hook()
+        if self._valid:
+            color = self._get_value()
+        else:
+            color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW)
+        self._invocation_button.SetColour(color)
+        
     def _create_button(self, parent, label, **kwargs):
         size = self._button_size(parent)
         return wx.lib.colourselect.ColourSelect(parent, -1, size=size)

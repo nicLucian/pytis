@@ -263,6 +263,10 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
             field = TimeField
         elif isinstance(type, pytis.data.Color):
             field = ColorSelectionField
+        elif isinstance(type, pytis.data.Inet):
+            field = InetField
+        elif isinstance(type, pytis.data.Macaddr):
+            field = MacaddrField
         elif isinstance(type, pytis.data.Password):
             field = PasswordField
         elif isinstance(type, pytis.data.String):
@@ -1291,7 +1295,10 @@ class MaskedTextField(TextField):
         if self._ctrl.IsEmpty():
             return ''
         else:
-            return self._ctrl.GetValue()
+            value = self._ctrl.GetValue()
+            if '_' in self._formatcodes():
+                value = value.replace(' ', '')
+            return value
 
     
 class DateField(Invocable, MaskedTextField, SpinnableField):
@@ -1365,6 +1372,22 @@ class ColorSelectionField(Invocable, TextField):
             self._invocation_button.SetColour(value)
         return super(ColorSelectionField, self)._set_value(value)
 
+class InetField(MaskedTextField):
+    """Input field for values of type 'pytis.data.Inet'."""
+
+    def _mask(self):
+        return '###.###.###.###'
+    
+    def _formatcodes(self):
+        return 'F_r'
+
+
+class MacaddrField(MaskedTextField):
+    """Input field for values of type 'pytis.data.Macaddr'."""
+
+    def _mask(self):
+        return 'NN:NN:NN:NN:NN:NN'
+    
     
 class GenericCodebookField(InputField):
     """Společná nadtřída číselníkových políček."""

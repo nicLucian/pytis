@@ -591,7 +591,7 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
         return self._row.field_changed(self.id())
 
     def _px_size(self, parent, width, height):
-        size = dlg2px(parent, 4*(width+1)+2, 8*height+4.5)
+        size = dlg2px(parent, 4*(width+1)+2, 8*height+3)
         return (size.width, size.height)
     
     def _set_focus(self):
@@ -1240,30 +1240,44 @@ class Invocable(object, CommandHandler):
     def _can_invoke_selection(self, **kwargs):
         return self.enabled()
 
-    
-class DateField(Invocable, TextField, SpinnableField):
-    """Input field for values of type 'pytis.data.Date'.
+class MaskedTextField(TextField):
+    """Input field using masked control for user input.
 
-    The field implements selection invocation using a calendar widget.
-
-    The field also supports spinning (see 'SpinnableField') by one day per one step.
+    The input field control is a 'wx.lib.masked.TextCtrl' instance.  Derived
+    classes may customize the mask and behavior using '_mask()' and
+    '_formatcodes()' methods.
 
     """
-
     _DEFAULT_BACKGROUND_COLOR = wx.WHITE
-    _DEFAULT_WIDTH = 10
-    _INVOKE_TITLE = _(u"Vybrat z kalendáře")
-    _INVOKE_HELP = _(u"Zobrazit kalendář pro výběr datumu.")
-    _SPIN_STEP = datetime.timedelta(days=1)
+    
+    def _mask(self):
+        """Return input field mask for this field type.
 
+        To be overriden in derived classes.  Returns the value for the 'mask'
+        constructor argument of 'wx.lib.masked.TextCtrl' constructor.
+
+        """
+        return None
+        
+    def _formatcodes(self):
+        """Return input field format codes for this field type.
+
+        To be overriden in derived classes.  Returns the value for the
+        'formatcodes' constructor argument of 'wx.lib.masked.TextCtrl'
+        constructor.
+
+        """
+        return 'F'
+        
     def _create_text_ctrl(self, parent, size, style):
-        mask = config.date_format.lower()
-        for src, dst in (('%d','##'), ('%m','##'), ('%y','####')):
-            mask = mask.replace(src, dst)
-        print mask
-        ctrl = wx.lib.masked.TextCtrl(parent, -1, style=style, formatcodes='DF', mask=mask)
-        ctrl.SetSize(size)
-        self._initial_size = ctrl.GetSize()
+        formatcodes = self._formatcodes()
+        mask = self._mask()
+        ctrl = wx.lib.masked.TextCtrl(parent, -1, style=style, mask=mask, formatcodes=formatcodes)
+        if size is not None:
+            if 'F' in formatcodes:
+                # Use the actual field width when auto-fit is enabled.
+                size = (ctrl.GetSize().width, size[1])
+            ctrl.SetSize(size)
         return ctrl
 
     def _set_background_color(self, color):
@@ -1272,16 +1286,36 @@ class DateField(Invocable, TextField, SpinnableField):
         self._ctrl.SetValidBackgroundColour(color)
         self._ctrl.SetInvalidBackgroundColour(color)
         self._ctrl.SetEmptyBackgroundColour(color)
-        # HACK to maintain the desired size (otherwise the control gets resized
-        # when displayed for some unknown reason).
-        self._ctrl.SetSize(self._initial_size)
         
     def _get_value(self):
         if self._ctrl.IsEmpty():
             return ''
         else:
             return self._ctrl.GetValue()
+
     
+class DateField(Invocable, MaskedTextField, SpinnableField):
+    """Input field for values of type 'pytis.data.Date'.
+
+    The field implements selection invocation using a calendar widget.
+
+    The field also supports spinning (see 'SpinnableField') by one day per one step.
+
+    """
+
+    _INVOKE_TITLE = _(u"Vybrat z kalendáře")
+    _INVOKE_HELP = _(u"Zobrazit kalendář pro výběr datumu.")
+    _SPIN_STEP = datetime.timedelta(days=1)
+
+    def _mask(self):
+        mask = config.date_format.lower()
+        for src, dst in (('%d','##'), ('%m','##'), ('%y','####')):
+            mask = mask.replace(src, dst)
+        return mask
+
+    def _formatcodes(self):
+        return 'DF'
+        
     def _on_invoke_selection(self, alternate=False):
         if self._valid:
             d = self._row[self._id].value()

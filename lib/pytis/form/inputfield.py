@@ -1351,7 +1351,7 @@ class TimeField(MaskedTextField, SpinnableField):
         return 'DF!'
     
 
-class ColorSelectionField(Invocable, TextField):
+class ColorSelectionField(Invocable, MaskedTextField):
     """Vstupní pole pro výběr barvy."""
 
     _DEFAULT_WIDTH = 7
@@ -1371,6 +1371,9 @@ class ColorSelectionField(Invocable, TextField):
         if not self._inline:
             self._invocation_button.SetColour(value)
         return super(ColorSelectionField, self)._set_value(value)
+
+    def _mask(self):
+        return '\#NNNNNN'
 
 class InetField(MaskedTextField):
     """Input field for values of type 'pytis.data.Inet'."""

@@ -1326,13 +1326,22 @@ class DateField(Invocable, MaskedTextField, SpinnableField):
             self._set_value(self._type.export(date))
 
 
-class TimeField(TextField, SpinnableField):
+class TimeField(MaskedTextField, SpinnableField):
     """Input field for values of type 'pytis.data.Time'.
     
     The field also supports spinning (see 'SpinnableField') by one hour per one step.
 
     """
     _SPIN_STEP = datetime.timedelta(hours=1)
+
+    def _mask(self):
+        mask = config.time_format.lower()
+        for src, dst in (('%h','##'), ('%m','##'), ('%s','##'), ('%i','##'), ('%p','AA')):
+            mask = mask.replace(src, dst)
+        return mask
+
+    def _formatcodes(self):
+        return 'DF!'
     
 
 class ColorSelectionField(Invocable, TextField):

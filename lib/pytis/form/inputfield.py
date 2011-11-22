@@ -274,6 +274,8 @@ class InputField(object, KeyHandler, CallbackHandler, CommandHandler):
                 field = StructuredTextField
             else:
                 field = StringField
+        elif isinstance(type, pytis.data.Float):
+            field = FloatField
         elif isinstance(type, pytis.data.Number):
             field = NumericField
         else:
@@ -1017,7 +1019,37 @@ class SpinnableField(InputField):
         return self._valid
         
     
-class NumericField(TextField, SpinnableField):
+class BaseMaskedField(TextField):
+    """Base class for input fields using controls from wx.lib.masked."""
+    _DEFAULT_BACKGROUND_COLOR = wx.WHITE
+    
+    def _masked_ctrl_class(self):
+        return wx.lib.masked.TextCtrl
+
+    def _masked_ctrl_kwargs(self):
+        """Return masked ctrl specific constructor keyword arguments."""
+        return {}
+
+    def _create_text_ctrl(self, parent, size, style):
+        cls = self._masked_ctrl_class()
+        kwargs = self._masked_ctrl_kwargs()
+        return cls(parent, -1, style=style, size=size, **kwargs)
+
+    def _set_background_color(self, color):
+        # Force our colors over the control's colors as the control doesn't
+        # handle ineditable and denied colors and we also prefer our own
+        # validation logic and don't want to care about its duplicate
+        # validation logic.
+        # Disable event handlers to prevent resursion as the wx masked ctrl
+        # emits EVT_TEXT when colors are set (GRRR!)
+        self._disable_event_handlers()
+        self._ctrl.SetValidBackgroundColour(color)
+        self._ctrl.SetInvalidBackgroundColour(color)
+        self._ctrl.SetEmptyBackgroundColour(color)
+        self._enable_event_handlers()
+         
+     
+class NumericField(BaseMaskedField, SpinnableField):
     """Textové vstupní políčko pro data typu 'pytis.data.Number'."""
     _SPIN_STEP = 1
 
@@ -1040,6 +1072,27 @@ class NumericField(TextField, SpinnableField):
             result = box
         return result
     
+    def _masked_ctrl_class(self):
+        return wx.lib.masked.NumCtrl
+
+    def _masked_ctrl_kwargs(self):
+        import locale
+        lconv = locale.localeconv()
+        encoding = locale.getpreferredencoding()
+        return dict(super(NumericField, self)._masked_ctrl_kwargs(),
+                    integerWidth=40,
+                    fractionWidth=0,
+                    allowNone=True, # We ignore field's internal validation anyway...
+                    allowNegative=self._type.minimum() is None or self._type.minimum() < 0,
+                    useParensForNegatives=(lconv['n_sign_posn'] == 0),
+                    groupDigits=lconv['grouping'] and lconv['grouping'][0] != locale.CHAR_MAX,
+                    groupChar=lconv['thousands_sep'].decode(encoding),
+                    decimalChar=lconv['decimal_point'].decode(encoding),
+                    selectOnEntry=False,
+                    foregroundColour="Black",
+                    signedForegroundColour="Red",
+                    autoSize=False)
+    
     def _on_slider(self, event):
         self._set_value(str(self._slider.GetValue()))
         
@@ -1053,6 +1106,13 @@ class NumericField(TextField, SpinnableField):
                 position = int(value)
             self._slider.SetValue(position)
 
+    def _get_value(self):
+        value = self._ctrl.GetValue()
+        if value is None:
+            return ''
+        else:
+            return str(value)
+    
     def _enable(self):
         super(NumericField, self)._enable()
         if self._slider:
@@ -1062,7 +1122,16 @@ class NumericField(TextField, SpinnableField):
         super(NumericField, self)._disable()
         if self._slider:
             self._slider.Enable(False)
-   
+
+class FloatField(NumericField):
+    
+    def _masked_ctrl_kwargs(self):
+        precision = self._type.precision()
+        if precision is None:
+            precision = 4
+        return dict(super(FloatField, self)._masked_ctrl_kwargs(), fractionWidth=precision)
+
+            
 class CheckBoxField(Unlabeled, InputField):
     """Boolean control implemented using 'wx.CheckBox'."""
 
@@ -1244,7 +1313,8 @@ class Invocable(object, CommandHandler):
     def _can_invoke_selection(self, **kwargs):
         return self.enabled()
 
-class MaskedTextField(TextField):
+    
+class MaskedTextField(BaseMaskedField):
     """Input field using masked control for user input.
 
     The input field control is a 'wx.lib.masked.TextCtrl' instance.  Derived
@@ -1252,7 +1322,6 @@ class MaskedTextField(TextField):
     '_formatcodes()' methods.
 
     """
-    _DEFAULT_BACKGROUND_COLOR = wx.WHITE
     
     def _mask(self):
         """Return input field mask for this field type.
@@ -1272,25 +1341,19 @@ class MaskedTextField(TextField):
 
         """
         return 'F'
-        
+
+    def _masked_ctrl_kwargs(self):
+        return dict(formatcodes=self._formatcodes(), mask=self._mask())
+    
     def _create_text_ctrl(self, parent, size, style):
-        formatcodes = self._formatcodes()
-        mask = self._mask()
-        ctrl = wx.lib.masked.TextCtrl(parent, -1, style=style, mask=mask, formatcodes=formatcodes)
+        ctrl = super(MaskedTextField, self)._create_text_ctrl(parent, None, style)
         if size is not None:
-            if 'F' in formatcodes:
+            if 'F' in self._formatcodes():
                 # Use the actual field width when auto-fit is enabled.
                 size = (ctrl.GetSize().width, size[1])
             ctrl.SetSize(size)
         return ctrl
 
-    def _set_background_color(self, color):
-        # Force our colors over the control's colors as the control doesn't
-        # handle ineditable and denied colors.
-        self._ctrl.SetValidBackgroundColour(color)
-        self._ctrl.SetInvalidBackgroundColour(color)
-        self._ctrl.SetEmptyBackgroundColour(color)
-        
     def _get_value(self):
         if self._ctrl.IsEmpty():
             return ''
@@ -1300,7 +1363,7 @@ class MaskedTextField(TextField):
                 value = value.replace(' ', '')
             return value
 
-    
+
 class DateField(Invocable, MaskedTextField, SpinnableField):
     """Input field for values of type 'pytis.data.Date'.
 
@@ -1382,6 +1445,7 @@ class ColorSelectionField(Invocable, MaskedTextField):
 
     def _mask(self):
         return '\#NNNNNN'
+
 
 class InetField(MaskedTextField):
     """Input field for values of type 'pytis.data.Inet'."""

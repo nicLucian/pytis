@@ -2856,8 +2856,8 @@ class Field(object):
               type=None, type_=None, width=None, column_width=None, disable_column=False,
               fixed=False, height=None, editable=None, compact=False, nocopy=False, default=None,
               computer=None, line_separator=';', codebook=None, display=None, prefer_display=None,
-              display_size=None, null_display=None, allow_codebook_insert=False,
-              codebook_insert_spec=None, codebook_insert_prefill=None,
+              display_size=None, null_display=None, joined_display=False,
+              allow_codebook_insert=False, codebook_insert_spec=None, codebook_insert_prefill=None,
               codebook_runtime_filter=None, runtime_filter=None,
               runtime_arguments=None, selection_type=None, completer=None,
               orientation=Orientation.VERTICAL, post_process=None, filter=None, filter_list=None,
@@ -2892,6 +2892,7 @@ class Field(object):
         assert prefer_display is None or isinstance(prefer_display, bool), prefer_display
         assert display_size is None or isinstance(display_size, int), display_size
         assert null_display is None or isinstance(null_display, basestring), null_display
+        assert isinstance(joined_display, bool), joined_display
         # TODO: Enable this after merging data-type-cleanup! (belongs to the line above)
         # and not not_null and (codebook or enumerator)
         assert isinstance(allow_codebook_insert, bool), allow_codebook_insert
@@ -3019,6 +3020,7 @@ class Field(object):
         self._prefer_display = prefer_display
         self._display_size = display_size
         self._null_display = null_display
+        self._joined_display = joined_display
         self._allow_codebook_insert = allow_codebook_insert
         self._codebook_insert_spec = codebook_insert_spec
         self._codebook_insert_prefill = codebook_insert_prefill
@@ -3148,6 +3150,9 @@ class Field(object):
 
     def null_display(self):
         return self._null_display
+
+    def joined_display(self):
+        return self._joined_display
 
     def allow_codebook_insert(self):
         return self._allow_codebook_insert
@@ -3541,11 +3546,36 @@ class Specification(object):
 
     def _create_data_spec(self):
         if issubclass(self.data_cls, pytis.data.DBData):
-            B = pytis.data.DBColumnBinding
             table = self.table or camel_case_to_lower(self.__class__.__name__, '_')
-            bindings = [B(f.id(), table, f.dbcolumn(), type_=f.type(), crypto_name=f.crypto_name(),
-                          **f.type_kwargs())
-                        for f in self.fields if not f.virtual()]
+            B = pytis.data.DBColumnBinding
+            bindings = []
+            for f in self.fields:
+                if f.virtual():
+                    continue
+                b = B(f.id(), table, f.dbcolumn(), type_=f.type(),
+                      crypto_name=f.crypto_name(), **f.type_kwargs())
+                bindings.append(b)
+                if f.joined_display():
+                    enumerator = b.kwargs().get('enumerator')
+                    assert isinstance(enumerator, pytis.data.DataEnumerator), enumerator
+                    display = f.display()
+                    if display is None:
+                        import config
+                        display = config.resolver.get(f.codebook(), 'cb_spec').display()
+                    assert isinstance(display, basestring), display
+                    enumerator_bindings = enumerator.data_factory()._args[0]
+                    db = find(display, enumerator_bindings, key=lambda x: x.id())
+                    value_column = enumerator.value_column()
+                    if value_column is not None:
+                        eb = find(value_column, enumerator_bindings, key=lambda x: x.id())
+                    else:
+                        eb = enumerator.data_factory()._args[1] # Use the enumerator key.
+                    bindings.append(B(b.id()+'.'+eb.id(), eb.table(), eb.column(),
+                                      related_to=b, type_=eb.type(),
+                                      crypto_name=eb.crypto_name(), **eb.kwargs()))
+                    bindings.append(B(b.id()+'.'+db.id(), db.table(), db.column(),
+                                      type_=db.type(),
+                                      crypto_name=db.crypto_name(), **db.kwargs()))
             if self.key:
                 keyid = self.key
                 if isinstance(keyid, (list, tuple)):

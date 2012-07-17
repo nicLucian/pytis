@@ -39,7 +39,7 @@ class HelpGenerator(object):
     def __init__(self, directory):
         self._diretory = directory
         self._menu_help_data = pd.dbtable('e_pytis_menu_help', ('menuid', 'content'),
-                                                  config.dbconnection)
+                                          config.dbconnection)
 
     def _save_menu_help(self, menuid, content):
         data = self._menu_help_data

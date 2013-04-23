@@ -59,7 +59,9 @@ import thread
 import weakref
 
 from pytis.data import *
+import pytis.util
 
+_ = pytis.util.translations('pytis-data')
 
 ### Obecné třídy
 

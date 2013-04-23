@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2012 Brailcom, o.p.s.
+# Copyright (C) 2001-2013 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ from cStringIO import StringIO
 import datetime
 #from wxPython.pytis.maskededit import wxMaskedTextCtrl
 
+_ = pytis.util.translations('pytis-wx')
 
 class _TextValidator(wx.PyValidator):
     def __init__(self, control, filter):
@@ -2054,16 +2055,16 @@ class StructuredTextField(TextField):
                 return []
             
     class ImageAlignments(pytis.presentation.Enumeration):
-        enumeration = (('inline', _("Do řádku")),
-                       ('left', _("Vlevo")),
-                       ('right', _("Vpravo")))
+        enumeration = (('inline', _(u"Do řádku")),
+                       ('left', _(u"Vlevo")),
+                       ('right', _(u"Vpravo")))
     class ImageSizes(pytis.presentation.Enumeration):
         SMALL_THUMBNAIL_SIZE = 200
         LARGE_THUMBNAIL_SIZE = 350
-        enumeration = (('small-thumbnail', _("Malý náhled (%d px), kliknutím se zvětší" % SMALL_THUMBNAIL_SIZE)),
-                       ('large-thumbnail', _("Větší náhled (%d px), kliknutím se zvětší" % LARGE_THUMBNAIL_SIZE)),
-                       #('custom-thumbnail', _("Vlastní velikost náhledu")),
-                       ('full-size', _("V plné velikosti (vhodné pro snímek obrazovky apod.)")))
+        enumeration = (('small-thumbnail', _(u"Malý náhled (%d px), kliknutím se zvětší" % SMALL_THUMBNAIL_SIZE)),
+                       ('large-thumbnail', _(u"Větší náhled (%d px), kliknutím se zvětší" % LARGE_THUMBNAIL_SIZE)),
+                       #('custom-thumbnail', _(u"Vlastní velikost náhledu")),
+                       ('full-size', _(u"V plné velikosti (vhodné pro snímek obrazovky apod.)")))
         @classmethod
         def matching_size(cls, thumbnail):
             if thumbnail:
@@ -2271,8 +2272,8 @@ class StructuredTextField(TextField):
         if not isinstance(self._guardian, (StructuredTextEditor, ResizableInputForm)):
             menu +=(None,
                     UICommand(self.COMMAND_OPEN_IN_EDITOR(),
-                              _("Editovat v samostatném okně"),
-                              _("")),
+                              _(u"Editovat v samostatném okně"),
+                              ""),
                     )
         return menu
     
@@ -2593,7 +2594,7 @@ class StructuredTextField(TextField):
             Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na obrázek.")),
             )
-        button = pytis.presentation.Button(_("Vložit nový"), self._load_new_file)
+        button = pytis.presentation.Button(_(u"Vložit nový"), self._load_new_file)
         Columns = pytis.presentation.ColumnLayout
         row = run_form(InputForm, title=_(u"Vložit obrázek"), fields=fields,
                        prefill=dict(filename=filename,
@@ -2635,7 +2636,7 @@ class StructuredTextField(TextField):
             Field('tooltip', _(u"Tooltip"), width=50,
                   descr=_(u"Zadejte text zobrazený jako tooltip při najetí myší na odkaz.")),
             )
-        button = pytis.presentation.Button(_("Vložit nový"), self._load_new_file)
+        button = pytis.presentation.Button(_(u"Vložit nový"), self._load_new_file)
         row = run_form(InputForm, title=_(u"Vložit přílohu"), fields=fields,
                        prefill=dict(filename=filename,
                                     title=link.title(),

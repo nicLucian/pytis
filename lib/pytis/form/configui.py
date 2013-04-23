@@ -30,6 +30,8 @@ konfiguračních voleb obsažených v tomto layoutu.
 
 from pytis.form import *
 
+_ = pytis.util.translations('pytis-wx')
+
 _LAYOUT = (
     ('ui', LayoutSpec(_(u"Nastavení uživatelského rozhraní"), VGroup(
     LVGroup(_(u"Barvy"),

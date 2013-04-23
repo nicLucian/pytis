@@ -38,6 +38,8 @@ from wx import calendar
 from wx.lib import masked
 import wx.lib.mixins.listctrl
 
+_ = pytis.util.translations('pytis-wx')
+
 class Dialog(KeyHandler, CommandHandler, object):
     """Abstraktní třída, která je základem všech dialogů.
 

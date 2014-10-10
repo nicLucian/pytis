@@ -1608,8 +1608,7 @@ class InfoWindow(object):
           text, format, **kwargs -- passed to 'wx_text_view()' ('text' as 'content').
 
         """
-        frame = wx.Dialog(
-            parent or pytis.form.wx_frame(), title=title, name=_name,
+        frame = wx.Dialog(parent or pytis.form.wx_frame(), title=title, name=_name,
                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         # Temporarily use a modal dialog instead an ordinary frame to work
         # around the problem of closing a frame whose parent is a modal dialog
@@ -1653,9 +1652,7 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
         self.SetItemBackgroundColour(i, wx.Colour(225, 225, 225))
         if toplevel:
             self.SetItemFont(
-                i, wx.Font(
-                    self.GetFont().GetPointSize(), wx.DEFAULT, wx.NORMAL,
-                                        wx.BOLD))
+                i, wx.Font(self.GetFont().GetPointSize(), wx.DEFAULT, wx.NORMAL, wx.BOLD))
         self.SetItemData(i, -1)
 
     def _append_profile(self, profile, index, select=False, indent=''):
@@ -1697,8 +1694,7 @@ class ProfileSelectorPopup(wx.ListCtrl, wx.combo.ComboPopup):
                 if isinstance(item, pytis.presentation.Profile):
                     profile = find(item.id(), profiles, key=lambda p: p.id())
                     self._append_profile(
-                        profile, profiles.index(profile), profile is current,
-                                         indent=indent)
+                        profile, profiles.index(profile), profile is current, indent=indent)
                 else:
                     self._append_label(indent + item.title(), False)
                     append_system_profiles(item.items(), level=level + 1)
@@ -2271,24 +2267,19 @@ class Browser(wx.Panel, CommandHandler):
         for uicmd in (UICommand(Browser.COMMAND_GO_BACK(_command_handler=self),
                                 _("Back"),
                                 _("Go back to the previous location in browser history.")),
-                      UICommand(
-                          Browser.COMMAND_GO_FORWARD(_command_handler=self),
+                      UICommand(Browser.COMMAND_GO_FORWARD(_command_handler=self),
                                 _("Forward"),
                                 _("Go forward to the following location in browser history.")),
                       UICommand(Browser.COMMAND_RELOAD(_command_handler=self),
                                 _("Reload"),
                                 _("Reload the current document.")),
-                      UICommand(
-                          Browser.COMMAND_STOP_LOADING(_command_handler=self),
+                      UICommand(Browser.COMMAND_STOP_LOADING(_command_handler=self),
                                 _("Stop"),
                                 _("Stop loading the document.")),
-                      UICommand(
-                          Browser.COMMAND_LOAD_URI(_command_handler=self),
+                      UICommand(Browser.COMMAND_LOAD_URI(_command_handler=self),
                                 _("Location"),
                                 _("Current browser URI."),
-                                ctrl=(
-                                    LocationBar, dict(
-                                        size=(600, 25), editable=False))),
+                                ctrl=(LocationBar, dict(size=(600, 25), editable=False))),
                       ):
             uicmd.create_toolbar_ctrl(toolbar)
         toolbar.Realize()
@@ -2398,9 +2389,8 @@ class IN(pytis.data.Operator):
         self._table_column_label = view_spec.field(table_column_id).label()
         if arguments is None:
             arguments = {}
-        pytis.data.Operator.__init__(
-            self, 'IN', column_id, data_object, table_column_id,
-                                     condition, arguments)
+        pytis.data.Operator.__init__(self, 'IN', column_id, data_object,
+                                     table_column_id, condition, arguments)
 
     def column_id(self):
         return self._column_id
@@ -2654,10 +2644,9 @@ def _init_wx_ctrl(ctrl, tooltip=None, update=False, enabled=True, width=None, he
         ctrl.SetMinSize((ctrl.GetSize().width, height))
 
 
-def wx_button(
-    parent, label=None, icon=None, bitmap=None, id=-1, noborder=False, fullsize=False,
-              command=None, callback=None, enabled=True, update=False, tooltip=None, size=None,
-              width=None, height=None):
+def wx_button(parent, label=None, icon=None, bitmap=None, id=-1, noborder=False,
+              fullsize=False, command=None, callback=None, enabled=True, update=False,
+              tooltip=None, size=None, width=None, height=None):
     """Create and setup a button.
 
     This is a convenience helper to allow simple button creation and setup in one step.
@@ -2812,8 +2801,7 @@ def wx_combo(parent, choices, **kwargs):
     return wx_choice(parent, choices, _combo=True, **kwargs)
 
 
-def wx_text_ctrl(
-    parent, value=None, tooltip=None, on_key_down=None, on_text=None,
+def wx_text_ctrl(parent, value=None, tooltip=None, on_key_down=None, on_text=None,
                  length=None, width=None, height=None, readonly=False, enabled=True, _spin=False):
     if _spin:
         cls = wx.SpinCtrl

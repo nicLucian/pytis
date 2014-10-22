@@ -2133,7 +2133,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         pytis.form.message(_("Loading document failed."), log_=False)
 
     def _on_title_changed(self, event):
-        self._run_callback(self.CALL_URI_CHANGED, self._webview.GetCurrentTitle())
+        self._run_callback(self.CALL_TITLE_CHANGED, self._webview.GetCurrentTitle())
 
     def _on_navigating(self, event):
         uri = event.GetURL()

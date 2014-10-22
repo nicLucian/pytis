@@ -1991,7 +1991,7 @@ class LocationBar(wx.TextCtrl):
             self.SetOwnBackgroundColour(config.field_disabled_color)
             self.Refresh()
         browser = uicmd.args()['_command_handler']
-        browser.set_uri_change_callback(lambda uri: self.SetValue(uri))
+        browser.set_callback(browser.CALL_URI_CHANGED, self.SetValue)
         pytis.form.wx_callback(wx.EVT_KEY_DOWN, self, self._on_key_down)
         self._want_focus = 0
 
@@ -2063,18 +2063,23 @@ def help_proc(func):
     return HelpProc(func)
 
 
-class Browser(wx.Panel, CommandHandler):
+class Browser(wx.Panel, CommandHandler, CallbackHandler):
     """Web Browser widget.
 
     The widget can be embedded into other wx widgets as an ordinary wx.Panel.
     The public methods may be used then to manipulate the browser content.
 
     """
+    CALL_TITLE_CHANGED = 'CALL_TITLE_CHANGED'
+    """Callback called when the document title changes (called with the title as the argument)."""
+    CALL_URI_CHANGED = 'CALL_URI_CHANGED'
+    """Callback called when the current uri changes (called with the uri as the argument)."""
+
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
+        CallbackHandler.__init__(self)
         self._resource_provider = None
         self._restricted_navigation_uri = None
-        self._uri_change_callback = None
         self._last_help_uri = None
         self._webview = webview = wx.html2.WebView.New(self)
         wxid = webview.GetId()
@@ -2090,15 +2095,14 @@ class Browser(wx.Panel, CommandHandler):
     def _on_load_finished(self, event):
         busy_cursor(False)
         pytis.form.message(_("Document loaded."), log_=False)
-        if self._uri_change_callback:
-            self._uri_change_callback(event.GetURL())
+        self._run_callback(self.CALL_URI_CHANGED, event.GetURL())
 
     def _on_load_error(self, event):
         busy_cursor(False)
         pytis.form.message(_("Loading document failed."), log_=False)
 
     def _on_title_changed(self, event):
-        pass
+        self._run_callback(self.CALL_URI_CHANGED, self._webview.GetCurrentTitle())
 
     def _on_navigating(self, event):
         uri = event.GetURL()
@@ -2272,9 +2276,6 @@ class Browser(wx.Panel, CommandHandler):
         toolbar.Realize()
         return toolbar
 
-    def set_uri_change_callback(self, callback):
-        self._uri_change_callback = callback
-
     def load_uri(self, uri, restrict_navigation=None):
         self._resource_provider = None
         self._restricted_navigation_uri = restrict_navigation
@@ -2308,6 +2309,7 @@ class HelpBrowserFrame(wx.Frame):
         self.SetSizer(sizer)
         self.SetSize((800, 600))
         self.SendSizeEvent()
+        browser.set_callback(browser.CALL_TITLE_CHANGED, self.SetTitle)
 
     def load_uri(self, uri):
         self._browser.load_uri(uri)

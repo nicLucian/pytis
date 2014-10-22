@@ -3339,7 +3339,7 @@ class WebForm(Form, Refreshable):
         
     def _create_form_parts(self, sizer):
         self._browser = browser = Browser(self)
-        sizer.Add(browser.toolbar(self), 0, wx.EXPAND | wx.FIXED_MINSIZE)
+        sizer.Add(browser.toolbar(self), 0)
         sizer.Add(browser, 1, wx.EXPAND)
         content = self._content
         if content is not None:

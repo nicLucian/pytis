@@ -2107,7 +2107,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         CallbackHandler.__init__(self)
         self._resource_provider = None
         self._restricted_navigation_uri = None
-        self._last_help_uri = None
         self._webview = webview = wx.html2.WebView.New(self)
         wxid = webview.GetId()
         sizer = wx.BoxSizer(wx.VERTICAL)

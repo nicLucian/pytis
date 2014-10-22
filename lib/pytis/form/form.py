@@ -3336,6 +3336,18 @@ class WebForm(Form, Refreshable):
             "When 'content' specified, 'title' must be set too (and wice versa)."
         self._title = title
         self._content = content
+
+    def _full_init(self, *args, **kwargs):
+        Form._full_init(self, *args, **kwargs)
+        import wx.aui
+        parent = self.GetParent()
+        if isinstance(parent, wx.aui.AuiNotebook):
+            # Hack: The initial form size within the notebook is not computed
+            # correctly - the form has the minimal possible size.  This somewhat
+            # fixes the problem...  But why other forms have the correct size?
+            size = parent.GetSize()
+            self.SetSize(wx.Size(size.width - 14,
+                                 size.height - parent.GetHeightForPageHeight(0) - 5))
         
     def _create_form_parts(self, sizer):
         self._browser = browser = Browser(self)

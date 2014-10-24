@@ -2081,20 +2081,20 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         self._resource_provider = None
         self._restricted_navigation_uri = None
         self._webview = webview = wx.html2.WebView.New(self)
-        wxid = webview.GetId()
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self._webview, 1, wx.EXPAND)
+        sizer.Add(webview, 1, wx.EXPAND)
         self.SetSizer(sizer)
-        wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATING, webview, wxid, self._on_navigating)
-        wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATED, webview, wxid, self._on_navigated)
-        wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, wxid, self._on_load_finished)
-        wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, wxid, self._on_load_error)
-        wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, wxid, self._on_title_changed)
         self._custom_scheme_handlers = {
             'help': self._help_handler,
             'form': self._form_handler,
             'call': self._call_handler,
         }
+        wxid = webview.GetId()
+        wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATING, webview, wxid, self._on_navigating)
+        wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATED, webview, wxid, self._on_navigated)
+        wx_callback(wx.html2.EVT_WEBVIEW_LOADED, webview, wxid, self._on_load_finished)
+        wx_callback(wx.html2.EVT_WEBVIEW_ERROR, webview, wxid, self._on_load_error)
+        wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, wxid, self._on_title_changed)
 
     def _on_load_finished(self, event):
         busy_cursor(False)

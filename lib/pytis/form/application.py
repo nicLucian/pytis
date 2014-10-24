@@ -1082,10 +1082,9 @@ class Application(wx.App, KeyHandler, CommandHandler):
     def _cmd_help(self, topic='pytis'):
         """Zobraz dané téma v prohlížeči nápovědy."""
         browser = self._help_browser
-        if browser:
-            browser.Raise()
-        else:
+        if not browser:
             self._help_browser = browser = HelpBrowserFrame()
+        browser.Raise()
         browser.load_uri('help:' + topic)
 
     def _cmd_reload_rights(self):

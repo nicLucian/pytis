@@ -2157,7 +2157,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         if ':' in uri:
             # TODO: This would probably be better implemented using wx.WebView
             # sheme handlers support (WebView.RegisterHandler()), but it currently
-            # doesn't seem to work in wx Python. 
+            # doesn't seem to work in wx Python.
             # See https://groups.google.com/forum/#!topic/wxpython-users/IYhprRa4KJs
             scheme, name = uri.split(':', 1)
             if scheme in self._custom_scheme_handlers:
@@ -2165,7 +2165,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
                 handler(uri, name)
                 event.Veto()
                 return
-        if ((self._restricted_navigation_uri is not None 
+        if ((self._restricted_navigation_uri is not None
              and not uri.startswith(self._restricted_navigation_uri))):
             pytis.form.message(_("External URL navigation denied: %s") % uri, beep_=True)
             event.Veto()

@@ -2292,9 +2292,18 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         self._webview.LoadURL(uri)
 
     def reload(self):
+        """Reload the current browser document from its original source."""
         self._webview.Reload(wx.html2.WEBVIEW_RELOAD_NO_CACHE)
 
     def toolbar(self, parent):
+        """Create browser toolbar and return it as a 'wx.ToolBar' instance.
+
+        The toolbar is not part of the browser pane.  If a toolbar is desired,
+        it must be created separately using this method and added to the user
+        interface together with the main browser pane (the 'Browser' instance
+        itself).
+
+        """
         self._toolbar = toolbar = wx.ToolBar(parent)
         for uicmd in (UICommand(Browser.COMMAND_GO_BACK(_command_handler=self),
                                 _("Back"),
@@ -2347,6 +2356,16 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         return None
 
     def load_uri(self, uri, restrict_navigation=None):
+        """Load browser content from given URL.
+
+        Arguments:
+          uri -- URI of the document to load.
+          restrict_navigation -- URI prefix (string) to restrict further
+            navigation.  None means no restriction.  If a string is passed, the
+            user will not be able to navigate to URIs not matching given
+            prefix.
+
+        """
         self._resource_provider = None
         self._restricted_navigation_uri = restrict_navigation
         self._webview.LoadURL(uri)
@@ -2356,11 +2375,13 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
 
         Arguments:
           html -- HTML document to be loaded into the browser.
-          base_uri -- base uri of the document.  Relative URIs within the
+          base_uri -- base URI of the document.  Relative URIs within the
             document are relative to this URI.  Browser policies may also
             restrict loading further resources according to this URI.
-          restrict_navigation -- URI prefix to restrict further navigation.
-            The user will not be able to navigate to URIs outside given prefix.
+          restrict_navigation -- URI prefix (string) to restrict further
+            navigation.  None means no restriction.  If a string is passed, the
+            user will not be able to navigate to URIs not matching given
+            prefix.
           resource_provider -- 'lcg.ResourceProvider' instance providing
             external resources for the loaded document (images, scripts,
             stylesheets).  The HTML may refer to these resources and the

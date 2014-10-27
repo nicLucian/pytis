@@ -2212,7 +2212,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
     def _on_loaded(self, event):
         busy_cursor(False)
         pytis.form.message(_("Document loaded."), log_=False)
-        self._run_callback(self.CALL_URI_CHANGED, event.GetURL())
 
     def _on_error(self, event):
         busy_cursor(False)
@@ -2221,6 +2220,9 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
 
     def _on_title_changed(self, event):
         self._run_callback(self.CALL_TITLE_CHANGED, self._webview.GetCurrentTitle())
+
+    def _on_navigated(self, event):
+        self._run_callback(self.CALL_URI_CHANGED, event.GetURL())
 
     def _on_navigating(self, event):
         uri = event.GetURL()
@@ -2273,9 +2275,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
             proc()
         except:
             pytis.form.top_level_exception()
-
-    def _on_navigated(self, event):
-        pass
 
     def _can_go_forward(self):
         return self._webview.CanGoForward()

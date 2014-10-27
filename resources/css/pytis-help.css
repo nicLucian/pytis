@@ -39,11 +39,3 @@ div.table-of-contents {
 .foldable-tree-widget {
     padding: 3px;
 }
-.foldable-tree-widget li.foldable,
-.foldable-tree-widget button.toggle-menu-expansion.expanded {
-    background-image: url(resource:folder-open.png) !important;
-}
-.foldable-tree-widget li.foldable.folded,
-.foldable-tree-widget button.toggle-menu-expansion {
-    background-image: url(resource:folder-closed.png) !important;
-}

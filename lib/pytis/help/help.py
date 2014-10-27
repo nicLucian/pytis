@@ -473,7 +473,7 @@ class HelpGenerator(object):
                                        resource_provider=resource_provider)
                 nodes.append(node)
         root = lcg.ContentNode('help:', content=lcg.Content(), hidden=True, children=nodes)
-        return root.find_node('help:'+topic) or root.find_node('NotFound')
+        return root.find_node('help:' + topic) or root.find_node('NotFound')
 
 
 class HelpExporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
@@ -481,11 +481,15 @@ class HelpExporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
                    'heading',
                    'content')
 
+    def __init__(self, *args, **kwargs):
+        self._resource_base_uri = kwargs.pop('resource_base_uri')
+        super(HelpExporter, self).__init__(*args, **kwargs)
+
     def _uri_resource(self, context, resource):
         if resource.uri() is not None:
             return resource.uri()
         else:
-            return 'resource:' +resource.filename()
+            return self._resource_base_uri + resource.filename()
 
     def _menu(self, context):
         g = self._generator
@@ -493,4 +497,3 @@ class HelpExporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
         return g.div((g.h(g.a(_("Navigation"), accesskey="3"), 3),
                       tree.export(context)),
                      cls='menu-panel')
-

@@ -2150,6 +2150,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
             'form': self._form_handler,
             'call': self._call_handler,
         }
+        self._help_exporter_instance = None
         wxid = webview.GetId()
         wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATING, webview, wxid, self._on_navigating)
         wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATED, webview, wxid, self._on_navigated)
@@ -2158,10 +2159,19 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         wx_callback(wx.html2.EVT_WEBVIEW_TITLE_CHANGED, webview, wxid, self._on_title_changed)
         self._httpd = httpd = self.ResourceServer(weakref.ref(self))
         thread.start_new_thread(httpd.serve_forever, ())
-        self._resource_base_uri =  'http://localhost:%d/' % httpd.socket.getsockname()[1]
 
     def __del__(self):
         self._httpd.shutdown()
+
+    def _help_exporter(self):
+        from pytis.help import HelpExporter
+        exporter = self._help_exporter_instance
+        if exporter is None:
+            resource_base_uri =  'http://localhost:%d/' % self._httpd.socket.getsockname()[1]
+            exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
+                                    resource_base_uri=resource_base_uri)
+            self._help_exporter_instance = exporter
+        return exporter
 
     def _on_load_finished(self, event):
         busy_cursor(False)
@@ -2202,11 +2212,9 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler):
         event.Skip()
 
     def _help_handler(self, uri, name):
-        from pytis.help import HelpGenerator, HelpExporter
+        from pytis.help import HelpGenerator
         node = HelpGenerator().help_page(name)
-        exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
-                                resource_base_uri=self._resource_base_uri)
-        self.load_content(node, base_uri=uri, exporter=exporter)
+        self.load_content(node, base_uri=uri, exporter=self._help_exporter())
     
     def _form_handler(self, uri, name):
         view_spec = config.resolver.get(name, 'view_spec')

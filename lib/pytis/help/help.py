@@ -469,7 +469,7 @@ class HelpGenerator(object):
                                        resource_provider=resource_provider)
                 nodes.append(node)
         root = lcg.ContentNode('help:', content=lcg.Content(), hidden=True, children=nodes)
-        return root.find_node('help:'+topic) or root.find_node('NotFound')
+        return root.find_node('help:' + topic) or root.find_node('NotFound')
 
 
 class HelpExporter(pytis.form.Browser.Exporter):
@@ -484,4 +484,3 @@ class HelpExporter(pytis.form.Browser.Exporter):
         return g.div((g.h(g.a(_("Navigation"), accesskey="3"), 3),
                       tree.export(context)),
                      cls='menu-panel')
-

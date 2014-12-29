@@ -3337,11 +3337,6 @@ class WebForm(Form, Refreshable):
         self._title = title
         self._content = content
 
-    def _full_init(self, *args, **kwargs):
-        Form._full_init(self, *args, **kwargs)
-        import wx.aui
-        parent = self.GetParent()
-        
     def _create_form_parts(self, sizer):
         self._browser = browser = Browser(self)
         sizer.Add(browser.toolbar(self), 0)

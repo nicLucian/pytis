@@ -1542,6 +1542,8 @@ class StatusBar(wx.StatusBar):
             widths[-1] += 22
         self._orig_widths = widths[:]
         self.SetStatusWidths(widths)
+        SB_SUNKEN = 3 # This wx constant is missing in wx Python???
+        self.SetStatusStyles([SB_SUNKEN for f in fields])
 
     def _field_number(self, id):
         """Vrať pořadové číslo pole 'id' pro wxWindows.

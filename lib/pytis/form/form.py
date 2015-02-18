@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2001-2014 Brailcom, o.p.s.
+# Copyright (C) 2001-2015 Brailcom, o.p.s.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -3338,7 +3338,7 @@ class WebForm(Form, Refreshable):
         self._content = content
 
     def _create_form_parts(self, sizer):
-        self._browser = browser = Browser(self)
+        self._browser = browser = Browser(self, guardian=self)
         sizer.Add(browser.toolbar(self), 0)
         sizer.Add(browser, 1, wx.EXPAND)
         content = self._content

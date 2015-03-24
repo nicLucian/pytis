@@ -2105,17 +2105,6 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
     The public methods may be used then to manipulate the browser content.
 
     """
-    class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
-
-        def __init__(self, *args, **kwargs):
-            self._resource_base_uri = kwargs.pop('resource_base_uri')
-            super(Browser.Exporter, self).__init__(*args, **kwargs)
-
-        def _uri_resource(self, context, resource):
-            if resource.uri() is not None:
-                return resource.uri()
-            else:
-                return self._resource_base_uri + resource.filename()
 
     CALL_TITLE_CHANGED = 'CALL_TITLE_CHANGED'
     """Callback called when the document title changes (called with the title as the argument)."""
@@ -2178,6 +2167,21 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
                         break
                     self.wfile.write(data)
 
+    class Exporter(lcg.StyledHtmlExporter, lcg.HtmlExporter):
+
+        _STYLES = ('default.css',)
+
+        def __init__(self, *args, **kwargs):
+            self._resource_base_uri = kwargs.pop('resource_base_uri')
+            kwargs['styles'] = self._STYLES
+            super(Browser.Exporter, self).__init__(*args, **kwargs)
+
+        def _uri_resource(self, context, resource):
+            if resource.uri() is not None:
+                return resource.uri()
+            else:
+                return self._resource_base_uri + resource.filename()
+
     def __init__(self, parent, guardian=None):
         wx.Panel.__init__(self, parent)
         CallbackHandler.__init__(self)
@@ -2193,7 +2197,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
             'form': self._form_handler,
             'call': self._call_handler,
         }
-        self._help_exporter_instance = None
+        self._exporter_instance = {}
         wxid = webview.GetId()
         wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATING, webview, wxid, self._on_navigating)
         wx_callback(wx.html2.EVT_WEBVIEW_NAVIGATED, webview, wxid, self._on_navigated)
@@ -2207,14 +2211,13 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
     def __del__(self):
         self._httpd.shutdown()
 
-    def _help_exporter(self):
-        from pytis.help import HelpExporter
-        exporter = self._help_exporter_instance
-        if exporter is None:
+    def _exporter(self, exporter_class):
+        try:
+            exporter = self._exporter_instance[exporter_class]
+        except KeyError:
             resource_base_uri =  'http://localhost:%d/' % self._httpd.socket.getsockname()[1]
-            exporter = HelpExporter(styles=('default.css', 'pytis-help.css'),
-                                    resource_base_uri=resource_base_uri)
-            self._help_exporter_instance = exporter
+            exporter = exporter_class(resource_base_uri=resource_base_uri)
+            self._exporter_instance[exporter_class] = exporter
         return exporter
 
     def _on_loaded(self, event):
@@ -2258,9 +2261,9 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         event.Skip()
 
     def _help_handler(self, uri, name):
-        from pytis.help import HelpGenerator
+        from pytis.help import HelpGenerator, HelpExporter
         node = HelpGenerator().help_page(name)
-        self.load_content(node, base_uri=uri, exporter=self._help_exporter())
+        self.load_content(node, base_uri=uri, exporter_class=HelpExporter)
     
     def _form_handler(self, uri, name):
         view_spec = config.resolver.get(name, 'view_spec')
@@ -2413,7 +2416,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         self._restricted_navigation_uri = restrict_navigation
         self._webview.SetPage(html, base_uri)
 
-    def load_content(self, node, base_uri='', exporter=None):
+    def load_content(self, node, base_uri='', exporter_class=None):
         """Load browser content from 'lcg.ContentNode' instance.
 
         Arguments:
@@ -2423,16 +2426,13 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
           base_uri -- base uri of the document.  Relative URIs within the
             document are relative to this URI.  Browser policies may also
             restrict loading further resources according to this URI.
-          exporter -- lcg.HtmlExporter is used by default for exporting the
-            node's contents into HTML.  You may pass another exporter instance
-            if you want to customize the export.
+          exporter_class -- 'pytis.form.Browser.Exporter' is used by default
+            for exporting the node's contents into HTML.  You may pass another
+            exporter class derived from the default one if you want to
+            customize the export.
 
         """
-        if exporter is None:
-            exporter = self.Exporter(styles=('default.css',))
-            resource_base_uri = 'http://localhost:%d/' % self._httpd.socket.getsockname()[1]
-            exporter = self.Exporter(styles=('default.css',),
-                                     resource_base_uri=resource_base_uri)
+        exporter = self._exporter(exporter_class or self.Exporter)
         context = exporter.context(node, None)
         html = exporter.export(context)
         self.load_html(html.encode('utf-8'), base_uri=base_uri,

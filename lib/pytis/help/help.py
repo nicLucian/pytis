@@ -473,7 +473,7 @@ class HelpGenerator(object):
 
 
 class HelpExporter(pytis.form.Browser.Exporter):
-
+    _STYLES = ('default.css', 'pytis-help.css')
     _BODY_PARTS = ('menu',
                    'heading',
                    'content')

@@ -2172,15 +2172,12 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         _STYLES = ('default.css',)
 
         def __init__(self, *args, **kwargs):
-            self._resource_base_uri = kwargs.pop('resource_base_uri')
+            self._get_resource_uri = kwargs.pop('get_resource_uri')
             kwargs['styles'] = self._STYLES
             super(Browser.Exporter, self).__init__(*args, **kwargs)
 
         def _uri_resource(self, context, resource):
-            if resource.uri() is not None:
-                return resource.uri()
-            else:
-                return self._resource_base_uri + resource.filename()
+            return self._get_resource_uri(resource)                
 
     def __init__(self, parent, guardian=None):
         wx.Panel.__init__(self, parent)
@@ -2207,6 +2204,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         KeyHandler.__init__(self, webview)
         self._httpd = httpd = self.ResourceServer(weakref.ref(self))
         thread.start_new_thread(httpd.serve_forever, ())
+        self._resource_base_uri =  'http://localhost:%d' % httpd.socket.getsockname()[1]
 
     def __del__(self):
         self._httpd.shutdown()
@@ -2215,8 +2213,7 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         try:
             exporter = self._exporter_instance[exporter_class]
         except KeyError:
-            resource_base_uri =  'http://localhost:%d/' % self._httpd.socket.getsockname()[1]
-            exporter = exporter_class(resource_base_uri=resource_base_uri)
+            exporter = exporter_class(get_resource_uri=self._resource_uri)
             self._exporter_instance[exporter_class] = exporter
         return exporter
 
@@ -2349,6 +2346,15 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         toolbar.Realize()
         return toolbar
 
+    def _resource_uri(self, resource, absolute=True):
+        uri = resource.uri()
+        base_uri = self._resource_base_uri if absolute else ''
+        if uri is None:
+            uri = base_uri + '/' + resource.filename()
+        elif uri.startswith('resource:'):
+            uri = base_uri + uri[9:]
+        return uri
+
     def find_resource(self, uri):
         """Return the 'lcg.Resource' instance for given URI within the current document.
 
@@ -2366,11 +2372,11 @@ class Browser(wx.Panel, CommandHandler, CallbackHandler, KeyHandler):
         if self._resource_provider:
             # Try searching the existing resources by URI first.
             for resource in self._resource_provider.resources():
-                if resource.uri() == uri:
+                if self._resource_uri(resource, absolute=False) == uri:
                     return resource
                 if isinstance(resource, lcg.Image):
                     thumbnail = resource.thumbnail()
-                    if thumbnail and thumbnail.uri() == uri:
+                    if thumbnail and self._resource_uri(thumbnail, absolute=False) == uri:
                         return thumbnail
             # If URI doesn't match any existing resource, try locating the
             # resource using the standard resource provider's algorithm
